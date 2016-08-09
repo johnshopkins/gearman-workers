@@ -1,0 +1,20 @@
+{
+  "name": "johnshopkins/gearman-workers",
+  "description": "A library of Gearman workers used across our projects",
+  "license": "MIT",
+  "homepage": "http://github.com/johnshopkins/gearman-workers",
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "git@github.com:jenwachter/akamai-open-edgegrid-php.git"
+    }
+  ],
+  "require": {
+    "jenwachter/akamai-open-edgegrid-php": "dev-master"
+  },
+  "autoload": {
+    "psr-4" : {
+      "GearmanWorkers\\" : ["src/"]
+    }
+  }
+}

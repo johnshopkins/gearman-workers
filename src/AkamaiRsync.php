@@ -18,6 +18,9 @@ class AkamaiRsync
     // akamsi rsync auth
     $this->rsync_auth = $settings["rsync_auth"];
 
+    // akamai host (i.e. jhuwww.upload.akamai.com)
+    $this->akamai_host = $settings["akamai_host"];
+
     // akamai api auth
     $this->api_auth = $settings["api_auth"];
 
@@ -25,54 +28,66 @@ class AkamaiRsync
   }
 
   protected function addFunctions()
-  {  
-    $this->worker->addFunction("sync_uploads", array($this, "syncUploads"));
+  {
+    $this->worker->addFunction("upload", array($this, "upload"));
+    $this->worker->addFunction("delete", array($this, "delete"));
     $this->worker->addFunction("invalidate_cache", array($this, "invalidateCache"));
   }
 
-  public function syncUploads(\GearmanJob $job)
+  // rsync -a --relative /new/x/y/z/ user@remote:/pre_existing/dir/
+  // This way, you will end up with /pre_existing/dir/new/x/y/z/
+
+  // rsync -avz -e "ssh -i /Users/[your_username]/.ssh/id_rsa" ~/www/jhu/public/assets/themes/machado/dist/fonts/. sshacs@jhuwww.upload.akamai.com:/366916/theme/fonts
+  public function upload(\GearmanJob $job)
   {
     $workload = json_decode($job->workload());
-    echo $this->getDate() . " Uploads sync triggered from {$workload->trigger}.\n";
 
-    print_r($workload);
-    //
-    // // get username/password from secrets file
-    // $auth = Secret::get("jhu", ENV, "plugins", "wp-uploads-sync");
-    // $username = $auth->username;
-    // $password = $auth->password;
-    //
-    // // set password env variable
-    // putenv("RSYNC_PASSWORD={$auth->password}");
-    //
-    // // set some directories
-    // $uploadedTo = dirname($workload->file);
-    // $uploadsPosition = strpos($uploadedTo, "uploads") + strlen("uploads");
-    // $uploadsDirectory = substr($uploadedTo, 0, $uploadsPosition);
-    // $monthDirectory = substr($uploadedTo, $uploadsPosition); // /yyyy/mm
-    //
-    // $source = ".{$monthDirectory}";
-    // $destination = "366916/assets/uploads";
-    //
-    // // rsync files to Akamai using `apache` upload account
-    // $command = "cd {$uploadsDirectory} && rsync -az --delete --relative {$source} {$username}@jhuwww.upload.akamai.com::{$username}/{$destination} 2>&1 > /dev/null";
-    //
-    // $run = exec($command, $output, $return);
-    //
-    // if ($return > 0) {
-    //   // see http://wpkg.org/Rsync_exit_codes for rsync error codes
-    //   echo $this->getDate() . " Failed to rsync uploads to Akamai. File: {$workload->file}. Rsync returned error code {$return}.\n";
-    //   $this->logger->addCritical("Uploads could not be rsynced to Akamai. File: {$workload->file}. Rsync returned error code {$return}. in " . __FILE__ . " on line " . __LINE__);
-    // } else {
-    //   echo $this->getDate() . " Successfully rsynced uploads to Akamai.\n";
-    // }
 
+    // set up authentication
+
+    $username = $this->rsync_auth->username;
+    $password = $this->rsync_auth->password;
+    putenv("RSYNC_PASSWORD={$password}");
+
+
+    // move into home directory (/var/www/hub/public/assets/uploads)
+
+    $command = "cd {$workload->homepath}";
+    $run = exec($command, $output, $return);
+
+    if ($run > 0) {
+      $this->logger->addCritical("Could not `cd` into homepath to RSYNC uploads. File: Rsync returned error code {$return}. in " . __FILE__ . " on line " . __LINE__);
+      return;
+    }
+
+
+    // rsync each file separatly
+
+    foreach ($workload->filenames as $filename) {
+      $command = "rsync -az --relative {$workload->source}/{$filename} {$username}@{$this->akamai_host}::{$username}/{$this->directory} 2>&1 > /dev/null";
+      $run = exec($command, $output, $return);
+
+      if ($run > 0) {
+        $this->logger->addCritical("Failed to rsync file to Akamai. File: {$workload->source}/{$filename}. Rsync returned error code {$return} in " . __FILE__ . " on line " . __LINE__);
+      } else {
+        $this->logger->addInfo("Successfully rsynced {$workload->source}/{$filename} to Akamai");
+      }
+    }
+
+  }
+
+  public function delete(\GearmanJob $job)
+  {
+    $workload = json_decode($job->workload());
+
+    // print_r($workload->localPath);
+    // print_r($workload->akamaiPath);
+    // print_r($workload->filenames);
   }
 
   public function invalidateCache(\GearmanJob $job)
   {
     // $workload = json_decode($job->workload());
-    // echo $this->getDate() . " Invalidating the cache of updated files.\n";
     //
     // $urls = $this->getAttachmentUrls($workload->id);
     //
@@ -144,10 +159,5 @@ class AkamaiRsync
 
     // get rid of empty elements (files like PDF will not have thumbnail urls)
     return array_values(array_filter($urls));
-  }
-
-  protected function getDate()
-  {
-    return date("Y-m-d H:i:s");
   }
 }

@@ -16,13 +16,15 @@ class AkamaiRsync
     $this->directory = $settings["directory"];
 
     // akamsi rsync auth
-    $this->rsync_auth = $settings["rsync_auth"];
+    $this->username = $settings["rsync_auth"]->username;
+    $this->password = $settings["rsync_auth"]->password;
 
     // akamai host (i.e. jhuwww.upload.akamai.com)
     $this->akamai_host = $settings["akamai_host"];
 
     // akamai api auth
     $this->api_auth = $settings["api_auth"];
+
 
     $this->addFunctions();
   }
@@ -34,26 +36,17 @@ class AkamaiRsync
     $this->worker->addFunction("invalidate_cache", array($this, "invalidateCache"));
   }
 
-  // rsync -a --relative /new/x/y/z/ user@remote:/pre_existing/dir/
-  // This way, you will end up with /pre_existing/dir/new/x/y/z/
-
-  // rsync -avz -e "ssh -i /Users/[your_username]/.ssh/id_rsa" ~/www/jhu/public/assets/themes/machado/dist/fonts/. sshacs@jhuwww.upload.akamai.com:/366916/theme/fonts
   public function upload(\GearmanJob $job)
   {
     $workload = json_decode($job->workload());
 
-
-    // set up authentication
-
-    $username = $this->rsync_auth->username;
-    $password = $this->rsync_auth->password;
+    // auth
     putenv("RSYNC_PASSWORD={$password}");
-
 
     // rsync each file separatly
 
     foreach ($workload->filenames as $filename) {
-      $command = "cd {$workload->homepath} && rsync -az --relative {$workload->source}/{$filename} {$username}@{$this->akamai_host}::{$username}/{$this->directory} 2>&1 > /dev/null";
+      $command = "cd {$workload->homepath} && rsync -az --relative {$workload->source}/{$filename} {$this->username}@{$this->akamai_host}::{$this->username}/{$this->directory} 2>&1 > /dev/null";
       $run = exec($command, $output, $return);
 
       if ($run > 0) {
@@ -65,13 +58,26 @@ class AkamaiRsync
 
   }
 
+  // rsync -r --delete --include=oriole-bird.jpg '--exclude=*' assets/uploads/2016/08/. apache@jhuwww.upload.akamai.com::apache/366916/testing/assets/uploads/2016/08
   public function delete(\GearmanJob $job)
   {
     $workload = json_decode($job->workload());
 
-    // print_r($workload->localPath);
-    // print_r($workload->akamaiPath);
-    // print_r($workload->filenames);
+    // auth
+    putenv("RSYNC_PASSWORD={$password}");
+
+    // delete each file separatly
+
+    foreach ($workload->filenames as $filename) {
+      $command = "cd {$workload->homepath} && rsync -r --delete --include={$filename} {$workload->source}/ {$this->username}@{$this->akamai_host}::{$this->username}/{$this->directory} 2>&1 > /dev/null";
+      $run = exec($command, $output, $return);
+
+      if ($run > 0) {
+        $this->logger->addCritical("Failed to delete in Akamai net storage. File: {$workload->source}/{$filename}. Rsync returned error code {$return} in " . __FILE__ . " on line " . __LINE__);
+      } else {
+        $this->logger->addInfo("Successfully deleted {$workload->source}/{$filename} in Akamai net storage");
+      }
+    }
   }
 
   public function invalidateCache(\GearmanJob $job)

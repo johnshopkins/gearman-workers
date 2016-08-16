@@ -50,21 +50,10 @@ class AkamaiRsync
     putenv("RSYNC_PASSWORD={$password}");
 
 
-    // move into home directory (/var/www/hub/public/assets/uploads)
-
-    $command = "cd {$workload->homepath}";
-    $run = exec($command, $output, $return);
-
-    if ($run > 0) {
-      $this->logger->addCritical("Could not `cd` into homepath to RSYNC uploads. File: Rsync returned error code {$return}. in " . __FILE__ . " on line " . __LINE__);
-      return;
-    }
-
-
     // rsync each file separatly
 
     foreach ($workload->filenames as $filename) {
-      $command = "rsync -az --relative {$workload->source}/{$filename} {$username}@{$this->akamai_host}::{$username}/{$this->directory} 2>&1 > /dev/null";
+      $command = "cd {$workload->homepath} && rsync -az --relative {$workload->source}/{$filename} {$username}@{$this->akamai_host}::{$username}/{$this->directory} 2>&1 > /dev/null";
       $run = exec($command, $output, $return);
 
       if ($run > 0) {

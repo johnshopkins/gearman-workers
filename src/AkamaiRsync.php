@@ -49,8 +49,8 @@ class AkamaiRsync
       $command = "cd {$workload->homepath} && rsync -az --relative {$workload->source}/{$filename} {$this->username}@{$this->akamai_host}::{$this->username}/{$this->directory} 2>&1 > /dev/null";
       $run = exec($command, $output, $return);
 
-      if ($run > 0) {
-        $this->logger->addCritical("Failed to rsync file to Akamai. File: {$workload->source}/{$filename}. Rsync returned error code {$return} in " . __FILE__ . " on line " . __LINE__);
+      if ($return) {
+        $this->logger->addCritical("Failed to rsync file to Akamai. File: {$workload->source}/{$filename}. Rsync returned error `{$return}` in " . __FILE__ . " on line " . __LINE__);
       } else {
         $this->logger->addInfo("Successfully rsynced {$workload->source}/{$filename} to Akamai");
       }
@@ -58,7 +58,6 @@ class AkamaiRsync
 
   }
 
-  // rsync -r --delete --include=oriole-bird.jpg '--exclude=*' assets/uploads/2016/08/. apache@jhuwww.upload.akamai.com::apache/366916/testing/assets/uploads/2016/08
   public function delete(\GearmanJob $job)
   {
     $workload = json_decode($job->workload());
@@ -69,11 +68,11 @@ class AkamaiRsync
     // delete each file separatly
 
     foreach ($workload->filenames as $filename) {
-      $command = "cd {$workload->homepath} && rsync -r --delete --include={$filename} {$workload->source}/ {$this->username}@{$this->akamai_host}::{$this->username}/{$this->directory} 2>&1 > /dev/null";
+      $command = "cd {$workload->homepath} && rsync -r --delete --include={$filename} '--exclude=*' {$workload->source}/ {$this->username}@{$this->akamai_host}::{$this->username}/{$this->directory}/{$workload->source} 2>&1 > /dev/null";
       $run = exec($command, $output, $return);
 
-      if ($run > 0) {
-        $this->logger->addCritical("Failed to delete in Akamai net storage. File: {$workload->source}/{$filename}. Rsync returned error code {$return} in " . __FILE__ . " on line " . __LINE__);
+      if ($return) {
+        $this->logger->addCritical("Failed to delete in Akamai net storage. File: {$workload->source}/{$filename}. Rsync returned error `{$return}` in " . __FILE__ . " on line " . __LINE__);
       } else {
         $this->logger->addInfo("Successfully deleted {$workload->source}/{$filename} in Akamai net storage");
       }

@@ -72,7 +72,7 @@ class AkamaiRsync
       $run = exec($command, $output, $return);
 
       if ($return) {
-        $this->logger->addCritical("Failed to delete in Akamai net storage. File: {$workload->source}/{$filename}. Rsync returned error `{$return}` in " . __FILE__ . " on line " . __LINE__, array("output" => $output));
+        $this->logger->addCritical("Failed to delete file in Akamai net storage. File: {$workload->source}/{$filename}. Rsync returned error `{$return}` in " . __FILE__ . " on line " . __LINE__, array("output" => $output));
       } else {
         $this->logger->addInfo("Successfully deleted {$workload->source}/{$filename} in Akamai net storage");
       }

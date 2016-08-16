@@ -65,24 +65,6 @@ class AkamaiRsync
     // auth
     putenv("RSYNC_PASSWORD={$this->password}");
 
-    // delete each file separatly
-
-    // foreach ($workload->filenames as $filename) {
-    //
-    //   // something is wrong with $filename.
-    //   // when this function runs, nothing is deleted on akamai, but
-    //   // when you manually type in the SAME filename and run this, it works.
-    //
-    //   $command = "cd {$workload->homepath} && rsync -r --delete --include={$filename} '--exclude=*' {$workload->source}/ {$this->username}@{$this->akamai_host}::{$this->username}/{$this->directory}/{$workload->source} 2>&1 > /dev/null";
-    //   $run = exec($command, $output, $return);
-    //
-    //   if ($return) {
-    //     $this->logger->addCritical("Failed to delete file in Akamai net storage. File: {$workload->source}/{$filename}. Rsync returned error `{$return}` in " . __FILE__ . " on line " . __LINE__, array("output" => $output));
-    //   } else {
-    //     $this->logger->addInfo("Successfully deleted {$workload->source}/{$filename} in Akamai net storage");
-    //   }
-    // }
-
     $include = array();
 
     foreach ($workload->filenames as $filename) {

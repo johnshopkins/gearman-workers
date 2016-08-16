@@ -41,7 +41,7 @@ class AkamaiRsync
     $workload = json_decode($job->workload());
 
     // auth
-    putenv("RSYNC_PASSWORD={$password}");
+    putenv("RSYNC_PASSWORD={$this->password}");
 
     // rsync each file separatly
 
@@ -63,7 +63,7 @@ class AkamaiRsync
     $workload = json_decode($job->workload());
 
     // auth
-    putenv("RSYNC_PASSWORD={$password}");
+    putenv("RSYNC_PASSWORD={$this->password}");
 
     // delete each file separatly
 

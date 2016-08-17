@@ -6,6 +6,9 @@ class AkamaiRsync
 {
   public function __construct($settings = array())
   {
+    // namespace (ensures no duplicate worker functions)
+    $this->namespace = $settings["namespace"];
+
     // gearman worker
     $this->worker = $settings["worker"];
 
@@ -31,9 +34,9 @@ class AkamaiRsync
 
   protected function addFunctions()
   {
-    $this->worker->addFunction("upload", array($this, "upload"));
-    $this->worker->addFunction("delete", array($this, "delete"));
-    $this->worker->addFunction("purge_cache", array($this, "purgeCache"));
+    $this->worker->addFunction("{$this->namespace}_upload", array($this, "upload"));
+    $this->worker->addFunction("{$this->namespace}_delete", array($this, "delete"));
+    $this->worker->addFunction("{$this->namespace}_purge_cache", array($this, "purgeCache"));
   }
 
   public function upload(\GearmanJob $job)

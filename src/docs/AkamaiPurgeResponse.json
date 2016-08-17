@@ -1,0 +1,40 @@
+{
+   "error":"",
+   "body":{
+      "estimatedSeconds":240,
+      "progressUri":"/ccu/v2/purges/dcfe0f57-647a-11e6-a868-370c937ad33a",
+      "purgeId":"dcfe0f57-647a-11e6-a868-370c937ad33a",
+      "supportId":"17PY1471438953776035-270550208",
+      "httpStatus":201,
+      "detail":"Request accepted.",
+      "pingAfterSeconds":240
+    },
+   "header":{
+      "url":"https://akab-hrjlselaetfeecbb-57zvnqa3qqztq5u2.purge.akamaiapis.net/ccu/v2/queues/default",
+      "content_type":"application/json",
+      "http_code":201,
+      "header_size":270,
+      "request_size":606,
+      "filetime":-1,
+      "ssl_verify_result":0,
+      "redirect_count":0,
+      "total_time":6.031798,
+      "namelookup_time":5.013635,
+      "connect_time":5.022707,
+      "pretransfer_time":5.10126,
+      "size_upload":173,
+      "size_download":268,
+      "speed_download":44,
+      "speed_upload":28,
+      "download_content_length":268,
+      "upload_content_length":0,
+      "starttransfer_time":6.031763,
+      "redirect_time":0,
+      "certinfo":[
+
+      ],
+      "primary_ip":"104.117.28.111",
+      "redirect_url":"",
+      "request_header":"POST /ccu/v2/queues/default HTTP/1.1\r\nHost: akab-hrjlselaetfeecbb-57zvnqa3qqztq5u2.purge.akamaiapis.net\r\nAccept: */*\r\nContent-Length:173\r\nContent-Type:application/json\r\nAuthorization:EG1-HMAC-SHA256 client_token=akab-7fxwd34o525y3v7x-fhhy5ka3hq4sthli;access_token=akab-wodmzhjku5tpskfe-a2om4vbasgwyi3qd;timestamp=20160817T12:58:32+0000;nonce=fc3ca1304143ac6136548cdbd42f9a20;signature=XTvK7GXaFZMM84UxBPDEOM1Yv1RZGHHviL/FXRgfQog=\r\n\r\n"
+   }
+}

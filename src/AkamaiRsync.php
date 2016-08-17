@@ -40,6 +40,8 @@ class AkamaiRsync
   {
     $workload = json_decode($job->workload());
 
+    $this->logger->addInfo("upload");
+
     // auth
     putenv("RSYNC_PASSWORD={$this->password}");
 
@@ -61,6 +63,8 @@ class AkamaiRsync
   public function delete(\GearmanJob $job)
   {
     $workload = json_decode($job->workload());
+
+    $this->logger->addInfo("delete");
 
     // auth
     putenv("RSYNC_PASSWORD={$this->password}");
@@ -89,9 +93,9 @@ class AkamaiRsync
    */
   public function invalidateCache(\GearmanJob $job)
   {
-    $this->logger->addInfo("invalidate cache");
-
     $workload = json_decode($job->workload());
+
+    $this->logger->addInfo("invalidate cache");
 
     // setup edgegrid client
     $verbose = false;

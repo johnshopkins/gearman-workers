@@ -53,7 +53,7 @@ class AkamaiRsync
       $run = exec($command, $output, $return);
 
       if ($return) {
-        $this->logger->addWarning("Failed to rsync file to Akamai. File: {$workload->source}/{$filename}. Rsync returned error `{$return}` in " . __FILE__ . " on line " . __LINE__, array("output" => $output));
+        $this->logger->addWarning("Failed to rsync file to Akamai. File: {$workload->source}/{$filename}. Rsync returned error `{$return}` in " . __FILE__ . " on line " . __LINE__, array("output" => $output, "command" => $command));
       } else {
         $this->logger->addInfo("Successfully rsynced {$workload->source}/{$filename} to Akamai");
       }

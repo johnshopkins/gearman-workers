@@ -36,19 +36,16 @@ class AkamaiInvalidate
   {
     $workload = json_decode($job->workload());
 
-    $this->logger->addInfo("purge cache");
-
     // setup edgegrid client
     $verbose = false;
     $client = new \Akamai\EdgeGrid($verbose, $this->api_auth);
 
     // setup request
-    $client->path = "ccu/v3/invalidate/production";
+    $client->path = "ccu/v3/invalidate/url/production";
     $client->method = "POST";
     $client->body = json_encode(array(
       "objects" => $workload->urls
     ), JSON_UNESCAPED_SLASHES);
-    // $client->headers["Content-Length"] = strlen($client->body);
     $client->headers["Content-Type"] = "application/json";
 
     // run request.

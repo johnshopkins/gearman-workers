@@ -2,7 +2,7 @@
 
 namespace GearmanWorkers;
 
-class AkamaiRsync
+class AkamaiInvalidate
 {
   public function __construct($settings = array())
   {

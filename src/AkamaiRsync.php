@@ -48,7 +48,8 @@ class AkamaiRsync
     // rsync each file separatly
 
     foreach ($workload->filenames as $filename) {
-      $command = "cd {$workload->homepath} && rsync -az --relative {$workload->source}/{$filename} {$this->username}@{$this->akamai_host}::{$this->username}/{$this->directory} 2>&1 > /dev/null";
+      $sanitized = addcslashes($filename, "'");
+      $command = "cd {$workload->homepath} && rsync -az --relative $'{$workload->source}/{$sanitized}' {$this->username}@{$this->akamai_host}::{$this->username}/{$this->directory} 2>&1 > /dev/null";
       $run = exec($command, $output, $return);
 
       if ($return) {
@@ -70,14 +71,15 @@ class AkamaiRsync
     $include = array();
 
     foreach ($workload->filenames as $filename) {
-      $include[] = "--include={$filename}";
+      $sanitized = addcslashes($filename, "'");
+      $include[] = "--include=$'{$sanitized}'";
     }
 
     $command = "cd {$workload->homepath} && rsync -r --delete " . implode($include, " ") ." '--exclude=*' {$workload->source}/ {$this->username}@{$this->akamai_host}::{$this->username}/{$this->directory}/{$workload->source} 2>&1 > /dev/null";
     $run = exec($command, $output, $return);
 
     if ($return) {
-      $this->logger->addWarning("Failed to delete file in Akamai net storage. File: {$workload->source}/{$filename}. Rsync returned error `{$return}` in " . __FILE__ . " on line " . __LINE__, array("output" => $output));
+      $this->logger->addWarning("Failed to delete file in Akamai net storage. File: {$workload->source}/{$filename}. Rsync returned error `{$return}` in " . __FILE__ . " on line " . __LINE__, array("output" => $output, "command" => $command));
     } else {
       $this->logger->addInfo("Successfully deleted {$workload->source}/{$filename} in Akamai net storage");
     }

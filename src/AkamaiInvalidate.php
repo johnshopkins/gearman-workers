@@ -24,6 +24,7 @@ class AkamaiInvalidate
   protected function addFunctions()
   {
     $this->worker->addFunction("{$this->namespace}_invalidate_urls", array($this, "invalidateUrls"));
+    $this->worker->addFunction("{$this->namespace}_invalidate_page", array($this, "invalidatePage"));
   }
 
   /**
@@ -35,21 +36,7 @@ class AkamaiInvalidate
   public function invalidateUrls(\GearmanJob $job)
   {
     $workload = json_decode($job->workload());
-
-    // setup edgegrid client
-    $verbose = false;
-    $client = new \Akamai\EdgeGrid($verbose, $this->api_auth);
-
-    // setup request
-    $client->path = "ccu/v3/invalidate/url/production";
-    $client->method = "POST";
-    $client->body = json_encode(array(
-      "objects" => $workload->urls
-    ), JSON_UNESCAPED_SLASHES);
-    $client->headers["Content-Type"] = "application/json";
-
-    // run request.
-    $response = $client->request();
+    $response = $this->sendInvalidateRequest($workload->urls);
 
     // respond to error
     if ($response["error"]) {
@@ -70,5 +57,35 @@ class AkamaiInvalidate
     }
 
     return false;
+  }
+
+  public function invalidatePage(\GearmanJob $job)
+  {
+    $workload = json_decode($job->workload());
+
+    // wait about 5 seconds before purging to allow for modules to purge
+    sleep(5);
+
+    $response = $this->sendInvalidateRequest($workload->urls);
+
+    $this->logger->addInfo("page invalidation", array("response" => $response));
+  }
+
+  protected function sendInvalidateRequest($urls)
+  {
+    // setup edgegrid client
+    $verbose = false;
+    $client = new \Akamai\EdgeGrid($verbose, $this->api_auth);
+
+    // setup request
+    $client->path = "ccu/v3/invalidate/url/production";
+    $client->method = "POST";
+    $client->body = json_encode(array(
+      "objects" => $urls
+    ), JSON_UNESCAPED_SLASHES);
+    $client->headers["Content-Type"] = "application/json";
+
+    // run request
+    return $client->request();
   }
 }

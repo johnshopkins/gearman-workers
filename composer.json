@@ -10,7 +10,7 @@
     }
   ],
   "require": {
-    "jenwachter/akamai-open-edgegrid-php": "dev-master"
+    "johnshopkins/akamai-open-edgegrid-php": "dev-master"
   },
   "autoload": {
     "psr-4" : {

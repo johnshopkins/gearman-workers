@@ -54,7 +54,6 @@ class AkamaiInvalidate
     // respond to error
     if ($response["error"]) {
       $this->logger->addWarning("Failed to purge file cache in Akamai in " . __FILE__ . " on line " . __LINE__, array("objects" => $workload->urls, "error" => $response["error"], "response" => $response));
-      return;
     }
 
     // respond to successful request
@@ -64,10 +63,12 @@ class AkamaiInvalidate
 
       if ($body->httpStatus == 201) {
         $this->logger->addInfo("Successfully purged cache of objects in Akamai. Purge will be completed in an estimated {$body->estimatedSeconds} seconds.", array("objects" => $workload->urls, "response" => $response));
+        return $body->purgeId;
       } else {
         $this->logger->addWarning("Failed to purge cache of objects in Akamai. HTTP Response code {$body->httpStatus} in " . __FILE__ . " on line " . __LINE__, array("objects" => $workload->urls, "response" => $response));
       }
     }
 
+    return false;
   }
 }

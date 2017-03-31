@@ -45,8 +45,8 @@ abstract class Base
   {
     $secrets = Secret::get("aws");
     $credentials = array(
-      "accessKeyId" => $secrets->accessKeyId,
-      "secretAccessKey" => $secrets->secretAccessKey
+      "accessKeyId" => $secrets->iam->es->accessKeyId,
+      "secretAccessKey" => $secrets->iam->es->secretAccessKey
     );
     $http = new \HttpExchange\Adapters\Guzzle(new \GuzzleHttp\Client());
     $env = ENV;

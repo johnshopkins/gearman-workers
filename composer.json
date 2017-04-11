@@ -3,12 +3,6 @@
   "description": "A library of Gearman workers used across our projects",
   "license": "MIT",
   "homepage": "http://github.com/johnshopkins/gearman-workers",
-  "repositories": [
-    {
-      "type": "vcs",
-      "url": "git@github.com:jenwachter/akamai-open-edgegrid-php.git"
-    }
-  ],
   "require": {
     "johnshopkins/akamai-open-edgegrid-php": "v1.0"
   },

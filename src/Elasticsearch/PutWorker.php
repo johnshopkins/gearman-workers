@@ -80,28 +80,4 @@ class PutWorker extends Base
 
     return $this->elasticsearchClient->index($params);
   }
-
-  protected function getNode($id, $type)
-  {
-    $getterClass = "\\ElasticPosts\\Getters\\{$type}";
-    $getter = new $getterClass();
-
-    return $getter->get($id);
-  }
-
-  /**
-   * Get the post data ready for elasticsearch
-   * @param  object $post Post object
-   * @return object Cleaned post
-   */
-  protected function cleanPost($post)
-  {
-    $condensedClass = str_replace("_", "", $post->type);
-    $cleanerClass = "\\ElasticPosts\\Cleaners\\{$condensedClass}";
-    if (!class_exists($cleanerClass)) {
-        $cleanerClass = "\\ElasticPosts\\Cleaners\\Base";
-    }
-    $cleaner = new $cleanerClass();
-    return $cleaner->clean($post);
-  }
 }

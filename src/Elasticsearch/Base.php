@@ -20,6 +20,9 @@ abstract class Base
     // gearman logger
     $this->logger = $settings["logger"];
 
+    // http adapter
+    $this->http = $settings["http"];
+
     // app's namespace (hub, hubapi, jhu)
     $this->namespace = $settings["namespace"];
 
@@ -48,11 +51,10 @@ abstract class Base
       "accessKeyId" => $secrets->iam->es->accessKeyId,
       "secretAccessKey" => $secrets->iam->es->secretAccessKey
     );
-    $http = new \HttpExchange\Adapters\Guzzle(new \GuzzleHttp\Client());
     $env = ENV;
 
     $host = $secrets->es->write->$env->host;
-    return new \AWSElasticsearch\Client($http, $host, $credentials);
+    return new \AWSElasticsearch\Client($this->http, $host, $credentials);
   }
 
   protected function addFunctions() {}

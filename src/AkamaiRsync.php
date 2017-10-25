@@ -53,9 +53,16 @@ class AkamaiRsync
       $run = exec($command, $output, $return);
 
       if ($return) {
-        $this->logger->addWarning("Failed to rsync file to Akamai. File: {$workload->source}/{$filename}. Rsync returned error `{$return}` in " . __FILE__ . " on line " . __LINE__, array("output" => $output, "command" => $command));
+        $this->logger->addWarning("Failed to rsync file to Akamai net storage.", array(
+          "rsync_error" => $return,
+          "file" => "{$workload->source}/{$filename}",
+          "output" => $output,
+          "command" => $command
+        ));
       } else {
-        $this->logger->addInfo("Successfully rsynced {$workload->source}/{$filename} to Akamai");
+        $this->logger->addInfo("Successfully rsynced file to Akamai net storage.", array(
+          "file" => "{$workload->source}/{$filename}"
+        ));
       }
     }
 
@@ -79,9 +86,16 @@ class AkamaiRsync
     $run = exec($command, $output, $return);
 
     if ($return) {
-      $this->logger->addWarning("Failed to delete file in Akamai net storage. File: {$workload->source}/{$filename}. Rsync returned error `{$return}` in " . __FILE__ . " on line " . __LINE__, array("output" => $output, "command" => $command));
+      $this->logger->addWarning("Failed to delete file in Akamai net storage.", array(
+        "rsync_error" => $return,
+        "file" => "{$workload->source}/{$filename}",
+        "output" => $output,
+        "command" => $command
+      ));
     } else {
-      $this->logger->addInfo("Successfully deleted {$workload->source}/{$filename} in Akamai net storage");
+      $this->logger->addInfo("Successfully deleted file in Akamai net storage", array(
+        "file" => "{$workload->source}/{$filename}"
+      ));
     }
   }
 

@@ -40,7 +40,11 @@ class AkamaiInvalidate
 
     // respond to error
     if ($response["error"]) {
-      $this->logger->addWarning("Failed to purge file cache in Akamai in " . __FILE__ . " on line " . __LINE__, array("objects" => $workload->urls, "error" => $response["error"], "response" => $response));
+      $this->logger->addWarning("Failed to purge file cache in Akamai.", array(
+        "objects" => $workload->urls,
+        "error" => $response["error"],
+        "response" => $response
+      ));
     }
 
     // respond to successful request
@@ -49,10 +53,14 @@ class AkamaiInvalidate
       $body = json_decode($response["body"]);
 
       if ($body->httpStatus == 201) {
-        $this->logger->addInfo("Successfully purged cache of objects in Akamai. Purge will be completed in an estimated {$body->estimatedSeconds} seconds.", array("objects" => $workload->urls, "response" => $response));
+        // $this->logger->addInfo("Successfully purged cache of objects in Akamai. Purge will be completed in an estimated {$body->estimatedSeconds} seconds.", array("objects" => $workload->urls, "response" => $response));
         return $body->purgeId;
       } else {
-        $this->logger->addWarning("Failed to purge cache of objects in Akamai. HTTP Response code {$body->httpStatus} in " . __FILE__ . " on line " . __LINE__, array("objects" => $workload->urls, "response" => $response));
+        $this->logger->addWarning("Failed to purge cache of objects in Akamai.", array(
+          "code" => $body->httpStatus,
+          "objects" => $workload->urls,
+          "response" => $response
+        ));
       }
     }
 
@@ -67,8 +75,6 @@ class AkamaiInvalidate
     sleep(5);
 
     $response = $this->sendInvalidateRequest($workload->urls);
-
-    $this->logger->addInfo("page invalidation", array("response" => $response));
   }
 
   protected function sendInvalidateRequest($urls)

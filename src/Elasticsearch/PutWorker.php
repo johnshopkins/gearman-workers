@@ -16,16 +16,23 @@ class PutWorker extends Base
 
     if (!in_array($workload->type, $this->types)) return;
 
-    $this->logger->addInfo("Initiating elasticsearch PUT of post #{$workload->id}...");
+    $this->logger->addInfo("Initiating elasticsearch PUT of post.", array(
+      "post" => $workload->id
+    ));
 
     try {
       $result = $this->putOne($workload->id, $workload->type);
       if ($result) {
-        $this->logger->addInfo("Finished elasticsearch PUT of post #{$workload->id}.");
+        $this->logger->addInfo("Finished elasticsearch PUT of post.", array(
+          "post" => $workload->id
+        ));
       }
     } catch (\Exception $e) {
       $error = $e->getMessage();
-      $this->logger->addError("Put of post {$workload->id} FAILED. Error message: {$error}");
+      $this->logger->addError("Put of post FAILED.", array(
+        "post" => $workload->id,
+        "error" => $error
+      ));
     }
   }
 
@@ -50,12 +57,12 @@ class PutWorker extends Base
 
         try {
           $result = $this->putOne($id, $type, $index);
-          if ($result) {
-            $this->logger->addInfo("Put of post {$type}/{$id} complete.");
-          }
         } catch (\Exception $e) {
           $error = $e->getMessage();
-          $this->logger->addError("Put of post {$workload->id} FAILED. Error message: {$error}");
+          $this->logger->addError("Put of post FAILED.", array(
+            "post" => $workload->id,
+            "error" => $error
+          ));
         }
       }
     }
@@ -67,7 +74,6 @@ class PutWorker extends Base
 
     // data is not in the API
     if (!$data) {
-      $this->logger->addInfo("Post #{$id} is not in the API; deleting...");
       return $this->deleteOne($id, $type);
     }
 

@@ -14,17 +14,8 @@ class DeleteWorker extends Base
   {
     $workload = json_decode($job->workload());
 
-    $this->logger->addInfo("Initiating elasticsearch DELETE of post.", array(
-      "post" => $workload->id
-    ));
-
     try {
-      $result = $this->deleteOne($workload->id, $workload->type);
-      if ($result) {
-        $this->logger->addInfo("Finished elasticsearch DELETE of post.", array(
-          "post" => $workload->id
-        ));
-      }
+      $this->deleteOne($workload->id, $workload->type);
     } catch (\Exception $e) {
       $error = $e->getMessage();
       $this->logger->addError("Delete of post FAILED.", array(

@@ -16,17 +16,8 @@ class PutWorker extends Base
 
     if (!in_array($workload->type, $this->types)) return;
 
-    $this->logger->addInfo("Initiating elasticsearch PUT of post.", array(
-      "post" => $workload->id
-    ));
-
     try {
-      $result = $this->putOne($workload->id, $workload->type);
-      if ($result) {
-        $this->logger->addInfo("Finished elasticsearch PUT of post.", array(
-          "post" => $workload->id
-        ));
-      }
+      $this->putOne($workload->id, $workload->type);
     } catch (\Exception $e) {
       $error = $e->getMessage();
       $this->logger->addError("Put of post FAILED.", array(

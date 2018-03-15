@@ -75,6 +75,7 @@ class AkamaiInvalidate
     sleep(5);
 
     $response = $this->sendInvalidateRequest($workload->urls);
+    return json_encode($response);
   }
 
   protected function sendInvalidateRequest($urls)

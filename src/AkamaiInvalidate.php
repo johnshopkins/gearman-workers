@@ -36,35 +36,7 @@ class AkamaiInvalidate
   public function invalidateUrls(\GearmanJob $job)
   {
     $workload = json_decode($job->workload());
-    $response = $this->sendInvalidateRequest($workload->urls);
-
-    // respond to error
-    if ($response["error"]) {
-      $this->logger->addWarning("Failed to purge file cache in Akamai.", array(
-        "objects" => $workload->urls,
-        "error" => $response["error"],
-        "response" => $response
-      ));
-    }
-
-    // respond to successful request
-    if ($response["body"]) {
-
-      $body = json_decode($response["body"]);
-
-      if ($body->httpStatus == 201) {
-        // $this->logger->addInfo("Successfully purged cache of objects in Akamai. Purge will be completed in an estimated {$body->estimatedSeconds} seconds.", array("objects" => $workload->urls, "response" => $response));
-        return $body->purgeId;
-      } else {
-        $this->logger->addWarning("Failed to purge cache of objects in Akamai.", array(
-          "code" => $body->httpStatus,
-          "objects" => $workload->urls,
-          "response" => $response
-        ));
-      }
-    }
-
-    return false;
+    return $this->sendInvalidateRequest($workload->urls, $job);
   }
 
   public function invalidatePage(\GearmanJob $job)
@@ -74,11 +46,10 @@ class AkamaiInvalidate
     // wait about 5 seconds before purging to allow for modules to purge
     sleep(5);
 
-    $response = $this->sendInvalidateRequest($workload->urls);
-    return json_encode($response);
+    return $this->sendInvalidateRequest($workload->urls, $job);
   }
 
-  protected function sendInvalidateRequest($urls)
+  protected function sendInvalidateRequest($urls, $job)
   {
     // setup edgegrid client
     $verbose = false;
@@ -92,7 +63,51 @@ class AkamaiInvalidate
     ), JSON_UNESCAPED_SLASHES);
     $client->headers["Content-Type"] = "application/json";
 
-    // run request
-    return $client->request();
+    $response = $client->request();
+
+    if ($response["error"]) {
+
+      // error
+
+      $this->logger->addWarning("Cache purge failure", [
+        "handle" => $job->handle(),
+        "urls" => $workload->urls,
+        "error" => $response["error"],
+        "response" => $response
+      ]);
+
+      return false;
+
+    } else if ($response["body"]) {
+
+      // no initial error, but it still could have failed, so check response code
+
+      $body = json_decode($response["body"]);
+
+      if ($body->httpStatus == 201) {
+
+        $this->logger->addInfo("Successful purge", [
+          "handle" => $job->handle(),
+          "urls" => $workload->urls,
+          "response" => $response
+        ]);
+
+        return true;
+
+      } else {
+
+        $this->logger->addWarning("Cache purge failure", [
+          "handle" => $job->handle(),
+          "urls" => $workload->urls,
+          "response" => $response,
+          "code" => $body->httpStatus
+        ]);
+
+        return false;
+
+      }
+    } else {
+      return false;
+    }
   }
 }

@@ -70,8 +70,8 @@ class AkamaiInvalidate
       // error
 
       $this->logger->addWarning("Cache purge failure", [
-        "handle" => $job->handle(),
-        "urls" => $workload->urls,
+        'tags' => ['handle' => $job->handle()],
+        "urls" => $urls,
         "error" => $response["error"],
         "response" => $response
       ]);
@@ -87,9 +87,10 @@ class AkamaiInvalidate
       if ($body->httpStatus == 201) {
 
         $this->logger->addInfo("Successful purge", [
-          "handle" => $job->handle(),
-          "urls" => $workload->urls,
-          "response" => $response
+          'tags' => ['handle' => $job->handle()],
+          "urls" => $urls,
+          "response" => $response,
+          "code" => $body->httpStatus
         ]);
 
         return true;
@@ -97,8 +98,8 @@ class AkamaiInvalidate
       } else {
 
         $this->logger->addWarning("Cache purge failure", [
-          "handle" => $job->handle(),
-          "urls" => $workload->urls,
+          'tags' => ['handle' => $job->handle()],
+          "urls" => $urls,
           "response" => $response,
           "code" => $body->httpStatus
         ]);

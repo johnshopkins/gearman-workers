@@ -62,6 +62,16 @@ class AkamaiInvalidate
       "objects" => $urls
     ), JSON_UNESCAPED_SLASHES);
     $client->headers["Content-Type"] = "application/json";
+    
+    /*
+    cURL automatically sends a Expect: 100-continue header, which
+    periodically causes an error from Akamai purge cache plugin:
+      "title": "Expectation Failed",
+      "status": 417,
+      "detail": "Expect 100-continue header is not supported"
+    Sending empty Expect header to "fix" this bug
+    */
+    $client->headers["Expect"] = "";
 
     $response = $client->request();
 

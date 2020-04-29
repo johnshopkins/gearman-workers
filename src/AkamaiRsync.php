@@ -92,10 +92,6 @@ class AkamaiRsync
         "output" => $output,
         "command" => $command
       ));
-    } else {
-      $this->logger->addInfo("Successfully deleted file in Akamai net storage", array(
-        "file" => "{$workload->source}/{$filename}"
-      ));
     }
   }
 

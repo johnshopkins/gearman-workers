@@ -49,7 +49,7 @@ class AkamaiRsync
 
     foreach ($workload->filenames as $filename) {
       $sanitized = addcslashes($filename, "'");
-      $command = "cd {$workload->homepath} && rsync -az --relative $'{$workload->source}/{$sanitized}' {$this->username}@{$this->akamai_host}::{$this->username}/{$this->directory} 2>&1 > /dev/null";
+      $command = "cd {$workload->homepath} && rsync -az --relative '{$workload->source}/{$sanitized}' {$this->username}@{$this->akamai_host}::{$this->username}/{$this->directory} 2>&1 > /dev/null";
       $run = exec($command, $output, $return);
 
       if ($return) {

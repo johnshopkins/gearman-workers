@@ -94,18 +94,7 @@ class AkamaiInvalidate
 
       $body = json_decode($response["body"]);
 
-      if ($body->httpStatus == 201) {
-
-        $this->logger->addInfo("Successful purge", [
-          'tags' => ['handle' => $job->handle()],
-          "urls" => $urls,
-          "response" => $response,
-          "code" => $body->httpStatus
-        ]);
-
-        return true;
-
-      } else {
+      if ($body->httpStatus !== 201) {
 
         $this->logger->addWarning("Cache purge failure", [
           'tags' => ['handle' => $job->handle()],
@@ -115,6 +104,10 @@ class AkamaiInvalidate
         ]);
 
         return false;
+
+      } else {
+
+        return true;
 
       }
     } else {

@@ -59,10 +59,6 @@ class AkamaiRsync
           "output" => $output,
           "command" => $command
         ));
-      } else {
-        $this->logger->addInfo("Successfully rsynced file to Akamai net storage.", array(
-          "file" => "{$workload->source}/{$filename}"
-        ));
       }
     }
 

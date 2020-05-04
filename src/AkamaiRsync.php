@@ -40,6 +40,7 @@ class AkamaiRsync
 
   public function upload(\GearmanJob $job)
   {
+    $handle = $job->handle();
     $workload = json_decode($job->workload());
 
     // auth
@@ -53,8 +54,9 @@ class AkamaiRsync
       $run = exec($command, $output, $return);
 
       if ($return) {
-        $this->logger->addWarning("Failed to rsync file to Akamai net storage.", array(
+        $event = $this->logger->addWarning("Failed to rsync file to Akamai net storage.", array(
           "rsync_error" => $return,
+          "handle" => $handle,
           "file" => "{$workload->source}/{$filename}",
           "output" => $output,
           "command" => $command

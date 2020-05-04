@@ -28,6 +28,7 @@ class AkamaiRsync
     // akamai api auth
     $this->api_auth = $settings["api_auth"];
 
+    $this->database = $settings['database'] ?? null;
 
     $this->addFunctions();
   }
@@ -61,6 +62,20 @@ class AkamaiRsync
           "output" => $output,
           "command" => $command
         ));
+        if ($this->database) {
+          $this->database->prepare("UPDATE file_sync SET error = :error WHERE handle = :handle")->execute([
+            ':error' => $event,
+            ':handle' => $handle
+          ]);
+        }
+      } else {
+        // success
+        if ($this->database) {
+          $response = $this->database->prepare("UPDATE file_sync SET status = :status WHERE handle = :handle")->execute([
+            ':status' => 1,
+            ':handle' => $handle
+          ]);
+        }
       }
     }
 

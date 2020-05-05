@@ -75,6 +75,13 @@ class AkamaiRsync
             ':status' => 1,
             ':handle' => $handle
           ]);
+          $event = $this->logger->addInfo("Successfully rsynced file to Akamai net storage.", array(
+            "event" => $event,
+            "db_response" => $response,
+            "handle" => $handle,
+            "file" => "{$workload->source}/{$filename}",
+            "command" => $command
+          ));
         }
       }
     }

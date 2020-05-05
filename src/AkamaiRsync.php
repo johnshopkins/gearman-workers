@@ -71,13 +71,16 @@ class AkamaiRsync
       } else {
         // success
         if ($this->database) {
-          $response = $this->database->prepare("UPDATE file_sync SET status = :status WHERE handle = :handle")->execute([
+
+          $statement = $this->database->prepare("UPDATE file_sync SET status = :status WHERE handle = :handle");
+          $response = $statement->execute([
             ':status' => 1,
             ':handle' => $handle
           ]);
+
           $event = $this->logger->addInfo("Successfully rsynced file to Akamai net storage.", array(
-            "event" => $event,
             "db_response" => $response,
+            "db_error" => $statement->errorInfo(),
             "handle" => $handle,
             "file" => "{$workload->source}/{$filename}",
             "command" => $command

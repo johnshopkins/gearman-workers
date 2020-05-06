@@ -63,7 +63,8 @@ class AkamaiRsync
           "command" => $command
         ));
         if ($this->database) {
-          $this->database->prepare("UPDATE file_sync SET error = :error WHERE handle = :handle")->execute([
+          $db = new \cli\classes\Database($this->database);
+          $db->prepare("UPDATE file_sync SET error = :error WHERE handle = :handle")->execute([
             ':error' => $event,
             ':handle' => $handle
           ]);
@@ -71,8 +72,8 @@ class AkamaiRsync
       } else {
         // success
         if ($this->database) {
-
-          $statement = $this->database->prepare("UPDATE file_sync SET status = :status WHERE handle = :handle");
+          $db = new \cli\classes\Database($this->database);
+          $statement = $db->prepare("UPDATE file_sync SET status = :status WHERE handle = :handle");
           $response = $statement->execute([
             ':status' => 1,
             ':handle' => $handle

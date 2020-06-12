@@ -50,7 +50,9 @@ class AkamaiRsync
     // rsync each file separatly
 
     foreach ($workload->filenames as $filename) {
-      $sanitized = addcslashes($filename, "'");
+      // Fixes bash command for files with single quotes
+      // See: https://stackoverflow.com/a/1250279
+      $sanitized = str_replace("'", '\'"\'"\'', $filename);
       $command = "cd {$workload->homepath} && rsync -az --relative '{$workload->source}/{$sanitized}' {$this->username}@{$this->akamai_host}::{$this->username}/{$this->directory} 2>&1 > /dev/null";
       $run = exec($command, $output, $return);
 

@@ -28,6 +28,7 @@ class AkamaiRsync
     // akamai api auth
     $this->api_auth = $settings["api_auth"];
 
+    $this->callback = $settings['callback'] ?? null;
     $this->database = $settings['database'] ?? null;
 
     $this->addFunctions();
@@ -49,14 +50,16 @@ class AkamaiRsync
 
     // rsync each file separatly
 
-    foreach ($workload->filenames as $filename) {
+    foreach ($workload->filenames as $index => $filename) {
       // Fixes bash command for files with single quotes
       // See: https://stackoverflow.com/a/1250279
       $sanitized = str_replace("'", '\'"\'"\'', $filename);
       $command = "cd {$workload->homepath} && rsync -az --relative '{$workload->source}/{$sanitized}' {$this->username}@{$this->akamai_host}::{$this->username}/{$this->directory} 2>&1 > /dev/null";
+            
       $run = exec($command, $output, $return);
 
       if ($return) {
+        // fail
         $event = $this->logger->addWarning("Failed to rsync file to Akamai net storage.", array(
           "rsync_error" => $return,
           "handle" => $handle,
@@ -79,6 +82,9 @@ class AkamaiRsync
             ':status' => 1,
             ':handle' => $handle
           ]);
+        }
+        if ($this->callback && isset($workload->urls)) {
+          call_user_func_array([$this->callback, 'onUpload'], [$filename, $workload->urls[$index], $workload->type ?? null]);
         }
       }
     }

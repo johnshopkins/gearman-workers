@@ -84,7 +84,7 @@ class AkamaiRsync
           ]);
         }
         if ($this->callback && isset($workload->urls)) {
-          call_user_func_array([$this->callback, 'onUpload'], [$filename, $workload->urls[$index], $workload->type ?? null]);
+          call_user_func_array([$this->callback, 'onUpload'], [$filename, $workload->urls[$index], $workload->context ?? null]);
         }
       }
     }

@@ -79,18 +79,9 @@ class AkamaiRsync
             ':status' => 1,
             ':handle' => $handle
           ]);
-
-          // $event = $this->logger->addInfo("Successfully rsynced file to Akamai net storage.", array(
-          //   "db_response" => $response,
-          //   "db_error" => $statement->errorInfo(),
-          //   "handle" => $handle,
-          //   "file" => "{$workload->source}/{$filename}",
-          //   "command" => $command
-          // ));
         }
       }
     }
-
   }
 
   public function delete(\GearmanJob $job)

@@ -7,37 +7,36 @@ class AkamaiRsync
   public function __construct($settings = array())
   {
     // namespace (ensures no duplicate worker functions)
-    $this->namespace = $settings["namespace"];
+    $this->namespace = $settings['namespace'];
 
     // gearman worker
-    $this->worker = $settings["worker"];
+    $this->worker = $settings['worker'];
 
     // gearman logger
-    $this->logger = $settings["logger"];
+    $this->logger = $settings['logger'];
 
     // the directory where things will get rsynced to
-    $this->directory = $settings["directory"];
+    $this->directory = $settings['directory'];
 
     // akamsi rsync auth
-    $this->username = $settings["rsync_auth"]->username;
-    $this->password = $settings["rsync_auth"]->password;
+    $this->username = $settings['rsync_auth']->username;
+    $this->password = $settings['rsync_auth']->password;
 
     // akamai host (i.e. jhuwww.upload.akamai.com)
-    $this->akamai_host = $settings["akamai_host"];
+    $this->akamai_host = $settings['akamai_host'];
 
     // akamai api auth
-    $this->api_auth = $settings["api_auth"];
+    $this->api_auth = $settings['api_auth'];
 
-    $this->callback = $settings['callback'] ?? null;
-    $this->database = $settings['database'] ?? null;
+    $this->callback = $settings["callback"] ?? null;
 
     $this->addFunctions();
   }
 
   protected function addFunctions()
   {
-    $this->worker->addFunction("{$this->namespace}_upload", array($this, "upload"));
-    $this->worker->addFunction("{$this->namespace}_delete", array($this, "delete"));
+    $this->worker->addFunction("{$this->namespace}_upload", [$this, 'upload']);
+    $this->worker->addFunction("{$this->namespace}_delete", [$this, 'delete']);
   }
 
   public function upload(\GearmanJob $job)
@@ -60,18 +59,18 @@ class AkamaiRsync
 
       if ($return) {
         // fail
-        $event = $this->logger->addWarning("Failed to rsync file to Akamai net storage.", array(
-          "rsync_error" => $return,
-          "handle" => $handle,
-          "file" => "{$workload->source}/{$filename}",
-          "output" => $output,
-          "command" => $command
-        ));
         if ($this->database) {
           $db = new Database($this->database);
           $db->prepare("UPDATE file_sync SET error = :error WHERE handle = :handle")->execute([
             ':error' => $event,
             ':handle' => $handle
+        $event = $this->logger->addWarning('Failed to rsync file to Akamai net storage.', [
+          'rsync_error' => $return,
+          'handle' => $handle,
+          'file' => "{$workload->source}/{$filename}",
+          'output' => $output,
+          'command' => $command
+        ]);
           ]);
         }
       } else {
@@ -108,12 +107,12 @@ class AkamaiRsync
     $run = exec($command, $output, $return);
 
     if ($return) {
-      $this->logger->addWarning("Failed to delete file in Akamai net storage.", array(
-        "rsync_error" => $return,
-        "file" => "{$workload->source}/{$filename}",
-        "output" => $output,
-        "command" => $command
-      ));
+      $this->logger->addWarning('Failed to delete file in Akamai net storage.', [
+        'rsync_error' => $return,
+        'file' => "{$workload->source}/{$filename}",
+        'output' => $output,
+        'command' => $command
+      ]);
     }
   }
 

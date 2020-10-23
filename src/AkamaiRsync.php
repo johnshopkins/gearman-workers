@@ -58,12 +58,8 @@ class AkamaiRsync
       $run = exec($command, $output, $return);
 
       if ($return) {
+
         // fail
-        if ($this->database) {
-          $db = new Database($this->database);
-          $db->prepare("UPDATE file_sync SET error = :error WHERE handle = :handle")->execute([
-            ':error' => $event,
-            ':handle' => $handle
         $event = $this->logger->addWarning('Failed to rsync file to Akamai net storage.', [
           'rsync_error' => $return,
           'handle' => $handle,
@@ -71,20 +67,26 @@ class AkamaiRsync
           'output' => $output,
           'command' => $command
         ]);
+
+        if ($this->callback && method_exists($this->callback, 'onUploadFail')) {
+          call_user_func_array([$this->callback, 'onUploadFail'], [
+            $handle,
+            $event
           ]);
         }
+
       } else {
+
         // success
-        if ($this->database) {
-          $db = new Database($this->database);
-          $db->prepare("UPDATE file_sync SET status = :status WHERE handle = :handle")->execute([
-            ':status' => 1,
-            ':handle' => $handle
+        if ($this->callback && method_exists($this->callback, 'onUploadSuccess')) {
+          call_user_func_array([$this->callback, 'onUploadSuccess'], [
+            $handle,
+            $filename,
+            isset($workload->urls) ? $workload->urls[$index] : null,
+            $workload->context ?? null
           ]);
         }
-        if ($this->callback && isset($workload->urls)) {
-          call_user_func_array([$this->callback, 'onUpload'], [$filename, $workload->urls[$index], $workload->context ?? null]);
-        }
+
       }
     }
   }

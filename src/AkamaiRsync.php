@@ -83,7 +83,8 @@ class AkamaiRsync
             $handle,
             $filename,
             isset($workload->urls) ? $workload->urls[$index] : null,
-            $workload->context ?? null
+            $workload->context ?? null,
+            $workload->id ?? null
           ]);
         }
 

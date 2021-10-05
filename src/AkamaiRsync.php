@@ -53,7 +53,15 @@ class AkamaiRsync
       // Fixes bash command for files with single quotes
       // See: https://stackoverflow.com/a/1250279
       $sanitized = str_replace("'", '\'"\'"\'', $filename);
-      $command = "cd {$workload->homepath} && rsync -az --relative '{$workload->source}/{$sanitized}' {$this->username}@{$this->akamai_host}::{$this->username}/{$this->directory} 2>&1 > /dev/null";
+      $sourceFile = $workload->source . '/' . $sanitized;
+      $command = "cd {$workload->homepath} && rsync -az --relative '{$sourceFile}' {$this->username}@{$this->akamai_host}::{$this->username}/{$this->directory} 2>&1 > /dev/null";
+
+      if (!file_exists($workload->homepath . $sourceFile)) {
+        $this->logger->addWarning('File that needs to be rsynced does not exist yet; waiting 5 seconds to retry', [
+          'file' => $sourceFile
+        ]);
+        sleep(5);
+      }
             
       $run = exec($command, $output, $return);
 

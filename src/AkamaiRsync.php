@@ -79,7 +79,9 @@ class AkamaiRsync
         if ($this->callback && method_exists($this->callback, 'onUploadFail')) {
           call_user_func_array([$this->callback, 'onUploadFail'], [
             $handle,
-            $event
+            $event,
+            $workload->context ?? null,
+            $workload->id ?? null
           ]);
         }
 

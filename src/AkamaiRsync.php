@@ -47,7 +47,9 @@ class AkamaiRsync
     // auth
     putenv("RSYNC_PASSWORD={$this->password}");
 
-    // rsync each file separatly
+    $success = true;
+
+    // rsync each file separately
 
     foreach ($workload->filenames as $index => $filename) {
       // Fixes bash command for files with single quotes
@@ -66,10 +68,12 @@ class AkamaiRsync
         ]);
         sleep(5);
       }
-            
+
       $run = exec($command, $output, $return);
 
       if ($return) {
+
+        $success = false;
 
         // fail
         $event = $this->logger->addWarning('Failed to rsync file to Akamai net storage.', [
@@ -110,6 +114,9 @@ class AkamaiRsync
 
       }
     }
+
+    // when this function is called with doNormal, it needs a return value
+    return $success;
   }
 
   public function delete(\GearmanJob $job)

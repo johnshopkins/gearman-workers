@@ -58,7 +58,11 @@ class AkamaiRsync
 
       if (!file_exists($workload->homepath . $sourceFile)) {
         $this->logger->addWarning('File that needs to be rsynced does not exist yet; waiting 5 seconds to retry', [
-          'file' => $sourceFile
+          'context' => ['file' => $sourceFile],
+          'tags' => [
+            'gearman.handle' => $handle,
+            'jhu.package' => 'gearman-workers'
+          ]
         ]);
         sleep(5);
       }
@@ -69,11 +73,17 @@ class AkamaiRsync
 
         // fail
         $event = $this->logger->addWarning('Failed to rsync file to Akamai net storage.', [
-          'rsync_error' => $return,
-          'handle' => $handle,
-          'file' => "{$workload->source}/{$filename}",
-          'output' => $output,
-          'command' => $command
+          'context' => [
+            'rsync_error' => $return,
+            'handle' => $handle,
+            'file' => "{$workload->source}/{$filename}",
+            'output' => $output,
+            'command' => $command
+          ],
+          'tags' => [
+            'gearman.handle' => $handle,
+            'jhu.package' => 'gearman-workers'
+          ]
         ]);
 
         if ($this->callback && method_exists($this->callback, 'onUploadFail')) {
@@ -105,6 +115,7 @@ class AkamaiRsync
   public function delete(\GearmanJob $job)
   {
     $workload = json_decode($job->workload());
+    $handle = $job->handle();
 
     // auth
     putenv("RSYNC_PASSWORD={$this->password}");
@@ -121,10 +132,16 @@ class AkamaiRsync
 
     if ($return) {
       $this->logger->addWarning('Failed to delete file in Akamai net storage.', [
-        'rsync_error' => $return,
-        'file' => "{$workload->source}/{$filename}",
-        'output' => $output,
-        'command' => $command
+        'context' => [
+          'rsync_error' => $return,
+          'file' => "{$workload->source}/{$filename}",
+          'output' => $output,
+          'command' => $command
+        ],
+        'tags' => [
+          'gearman.handle' => $handle,
+          'jhu.package' => 'gearman-workers'
+        ]
       ]);
     }
   }

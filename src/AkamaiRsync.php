@@ -4,7 +4,7 @@ namespace GearmanWorkers;
 
 class AkamaiRsync
 {
-  public function __construct($settings = array())
+  public function __construct($settings = [])
   {
     // namespace (ensures no duplicate worker functions)
     $this->namespace = $settings['namespace'];
@@ -116,14 +116,14 @@ class AkamaiRsync
     // auth
     putenv("RSYNC_PASSWORD={$this->password}");
 
-    $include = array();
+    $include = [];
 
     foreach ($workload->filenames as $filename) {
       $sanitized = addcslashes($filename, "'");
       $include[] = "--include=$'{$sanitized}'";
     }
 
-    $command = "cd {$workload->homepath} && rsync -r --delete " . implode($include, " ") ." '--exclude=*' {$workload->source}/ {$this->username}@{$this->akamai_host}::{$this->username}/{$this->directory}/{$workload->source} 2>&1 > /dev/null";
+    $command = "cd {$workload->homepath} && rsync -r --delete " . implode(" ", $include) ." '--exclude=*' {$workload->source}/ {$this->username}@{$this->akamai_host}::{$this->username}/{$this->directory}/{$workload->source} 2>&1 > /dev/null";
     $run = exec($command, $output, $return);
 
     if ($return) {

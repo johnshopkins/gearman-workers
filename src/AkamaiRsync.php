@@ -44,6 +44,8 @@ class AkamaiRsync
     $handle = $job->handle();
     $workload = json_decode($job->workload());
 
+    $this->hook('beforeUpload', $handle, $workload);
+
     // auth
     putenv("RSYNC_PASSWORD={$this->password}");
 

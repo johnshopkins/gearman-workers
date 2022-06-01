@@ -80,28 +80,23 @@ class AkamaiRsync
           'command' => $command
         ]);
 
-        if ($this->callback && method_exists($this->callback, 'onUploadFail')) {
-          call_user_func_array([$this->callback, 'onUploadFail'], [
-            $handle,
-            $event,
-            $workload->context ?? null,
-            $workload->id ?? null
-          ]);
-        }
+        $this->hook('onUploadFail',
+          $handle,
+          $event,
+          $workload->context ?? null,
+          $workload->id ?? null
+        );
 
       } else {
 
         // success
-        if ($this->callback && method_exists($this->callback, 'onUploadSuccess')) {
-          call_user_func_array([$this->callback, 'onUploadSuccess'], [
-            $handle,
-            $filename,
-            isset($workload->urls) ? $workload->urls[$index] : null,
-            $workload->context ?? null,
-            $workload->id ?? null
-          ]);
-        }
-
+        $this->hook('onUploadSuccess',
+          $handle,
+          $filename,
+          isset($workload->urls) ? $workload->urls[$index] : null,
+          $workload->context ?? null,
+          $workload->id ?? null
+        );
       }
     }
 
@@ -136,4 +131,16 @@ class AkamaiRsync
     }
   }
 
+  /**
+   * Call a function on the callback class
+   * @param $name         string Name of function
+   * @param ...$arguments mixed  Arguments to pass to the callback
+   * @return void
+   */
+  protected function hook($name, ...$arguments): void
+  {
+    if ($this->callback && method_exists($this->callback, $name)) {
+      call_user_func_array([$this->callback, $name], $arguments);
+    }
+  }
 }

@@ -48,8 +48,11 @@ class AkamaiRsync
     if (isset($workload->uri) && substr($workload->uri, -3, 3) === 'pdf') {
       $debug = true;
       $this->logger->addInfo('UPLOAD STEP 4: AkamaiRsync::upload', [
-        'handle' => $handle,
-        'workload' => (array) $workload
+        'workload' => (array) $workload,
+        'tags' => [
+          'gearman.handle' => $handle,
+          'jhu.package' => 'gearman-workers'
+        ]
       ]);
     }
 
@@ -87,7 +90,11 @@ class AkamaiRsync
           'run_result' => $run,
           'command' => $command,
           'output' => $output,
-          'return' => $return
+          'return' => $return,
+          'tags' => [
+            'gearman.handle' => $handle,
+            'jhu.package' => 'gearman-workers'
+          ]
         ]);
       }
 

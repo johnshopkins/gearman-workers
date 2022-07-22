@@ -80,10 +80,15 @@ class AkamaiInvalidate
       // error
 
       $this->logger->addWarning("Cache purge failure", [
-        'tags' => ['handle' => $job->handle()],
-        "urls" => $urls,
-        "error" => $response["error"],
-        "response" => $response
+        'context' => [
+          "urls" => $urls,
+          "error" => $response["error"],
+          "response" => $response
+        ],
+        'tags' => [
+          'gearman.handle' => $job->handle(),
+          'jhu.package' => 'gearman-workers'
+        ]
       ]);
 
       return false;
@@ -97,10 +102,15 @@ class AkamaiInvalidate
       if ($body->httpStatus !== 201) {
 
         $this->logger->addWarning("Cache purge failure", [
-          'tags' => ['handle' => $job->handle()],
-          "urls" => $urls,
-          "response" => $response,
-          "code" => $body->httpStatus
+          'context' => [
+            "urls" => $urls,
+            "response" => $response,
+            "code" => $body->httpStatus
+          ],
+          'tags' => [
+            'gearman.handle' => $job->handle(),
+            'jhu.package' => 'gearman-workers'
+          ]
         ]);
 
         return false;

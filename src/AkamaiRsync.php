@@ -4,7 +4,7 @@ namespace GearmanWorkers;
 
 class AkamaiRsync
 {
-  public function __construct($settings = array())
+  public function __construct($settings = [])
   {
     // namespace (ensures no duplicate worker functions)
     $this->namespace = $settings['namespace'];
@@ -44,6 +44,20 @@ class AkamaiRsync
     $handle = $job->handle();
     $workload = json_decode($job->workload());
 
+    $debug = false;
+    if (isset($workload->uri) && substr($workload->uri, -3, 3) === 'pdf') {
+      $debug = true;
+      $this->logger->addInfo('UPLOAD STEP 4: AkamaiRsync::upload', [
+        'workload' => (array) $workload,
+        'tags' => [
+          'gearman.handle' => $handle,
+          'jhu.package' => 'gearman-workers'
+        ]
+      ]);
+    }
+
+    $this->hook('beforeUpload', $handle, $workload);
+
     // auth
     putenv("RSYNC_PASSWORD={$this->password}");
 
@@ -71,6 +85,19 @@ class AkamaiRsync
 
       $run = exec($command, $output, $return);
 
+      if ($debug) {
+        $this->logger->addInfo('UPLOAD STEP 5: AkamaiRsync::upload run command', [
+          'run_result' => $run,
+          'command' => $command,
+          'output' => $output,
+          'return' => $return,
+          'tags' => [
+            'gearman.handle' => $handle,
+            'jhu.package' => 'gearman-workers'
+          ]
+        ]);
+      }
+
       if ($return) {
 
         $success = false;
@@ -90,28 +117,23 @@ class AkamaiRsync
           ]
         ]);
 
-        if ($this->callback && method_exists($this->callback, 'onUploadFail')) {
-          call_user_func_array([$this->callback, 'onUploadFail'], [
-            $handle,
-            $event,
-            $workload->context ?? null,
-            $workload->id ?? null
-          ]);
-        }
+        $this->hook('onUploadFail',
+          $handle,
+          $event,
+          $workload->context ?? null,
+          $workload->id ?? null
+        );
 
       } else {
 
         // success
-        if ($this->callback && method_exists($this->callback, 'onUploadSuccess')) {
-          call_user_func_array([$this->callback, 'onUploadSuccess'], [
-            $handle,
-            $filename,
-            isset($workload->urls) ? $workload->urls[$index] : null,
-            $workload->context ?? null,
-            $workload->id ?? null
-          ]);
-        }
-
+        $this->hook('onUploadSuccess',
+          $handle,
+          $filename,
+          isset($workload->urls) ? $workload->urls[$index] : null,
+          $workload->context ?? null,
+          $workload->id ?? null
+        );
       }
     }
 
@@ -127,14 +149,14 @@ class AkamaiRsync
     // auth
     putenv("RSYNC_PASSWORD={$this->password}");
 
-    $include = array();
+    $include = [];
 
     foreach ($workload->filenames as $filename) {
       $sanitized = addcslashes($filename, "'");
       $include[] = "--include=$'{$sanitized}'";
     }
 
-    $command = "cd {$workload->homepath} && rsync -r --delete " . implode($include, " ") ." '--exclude=*' {$workload->source}/ {$this->username}@{$this->akamai_host}::{$this->username}/{$this->directory}/{$workload->source} 2>&1 > /dev/null";
+    $command = "cd {$workload->homepath} && rsync -r --delete " . implode(" ", $include) ." '--exclude=*' {$workload->source}/ {$this->username}@{$this->akamai_host}::{$this->username}/{$this->directory}/{$workload->source} 2>&1 > /dev/null";
     $run = exec($command, $output, $return);
 
     if ($return) {
@@ -153,4 +175,16 @@ class AkamaiRsync
     }
   }
 
+  /**
+   * Call a function on the callback class
+   * @param $name         string Name of function
+   * @param ...$arguments mixed  Arguments to pass to the callback
+   * @return void
+   */
+  protected function hook($name, ...$arguments): void
+  {
+    if ($this->callback && method_exists($this->callback, $name)) {
+      call_user_func_array([$this->callback, $name], $arguments);
+    }
+  }
 }

@@ -44,6 +44,15 @@ class AkamaiRsync
     $handle = $job->handle();
     $workload = json_decode($job->workload());
 
+    $debug = false;
+    if (isset($workload->uri) && substr($workload->uri, -3, 3) === 'pdf') {
+      $debug = true;
+      $this->logger->addInfo('UPLOAD STEP 4: AkamaiRsync::upload', [
+        'handle' => $handle,
+        'workload' => (array) $workload
+      ]);
+    }
+
     $this->hook('beforeUpload', $handle, $workload);
 
     // auth
@@ -72,6 +81,15 @@ class AkamaiRsync
       }
 
       $run = exec($command, $output, $return);
+
+      if ($debug) {
+        $this->logger->addInfo('UPLOAD STEP 5: AkamaiRsync::upload run command', [
+          'run_result' => $run,
+          'command' => $command,
+          'output' => $output,
+          'return' => $return
+        ]);
+      }
 
       if ($return) {
 

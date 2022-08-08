@@ -53,7 +53,21 @@ class AkamaiRsync
       ]);
     }
 
-    $this->hook('beforeUpload', $handle, $workload);
+    try {
+      $this->hook('beforeUpload', $handle, $workload);
+    } catch (\Throwable $e) {
+      $this->logger->addInfo('Error running beforeUpload hook', [
+        'handle' => $handle,
+        'workload' => (array) $workload,
+        'exception' => [
+          'message' => $e->getMessage(),
+          'file' => $e->getFile(),
+          'line' => $e->getLine(),
+          'code' => $e->getCode()
+        ]
+      ]);
+    }
+
 
     // auth
     putenv("RSYNC_PASSWORD={$this->password}");
@@ -63,20 +77,37 @@ class AkamaiRsync
     // rsync each file separately
 
     foreach ($workload->filenames as $index => $filename) {
-      // Fixes bash command for files with single quotes
-      // See: https://stackoverflow.com/a/1250279
-      $sanitized = str_replace("'", '\'"\'"\'', $filename);
-      $sourceFile = $workload->source . '/' . $sanitized;
-      $command = "cd {$workload->homepath} && rsync -az --relative '{$sourceFile}' {$this->username}@{$this->akamai_host}::{$this->username}/{$this->directory} 2>&1 > /dev/null";
 
-      if (!file_exists($workload->homepath . $sourceFile)) {
-        $this->logger->addWarning('File that needs to be rsynced does not exist yet; waiting 5 seconds to retry', [
-          'file' => $sourceFile
+      try {
+        // Fixes bash command for files with single quotes
+        // See: https://stackoverflow.com/a/1250279
+        $sanitized = str_replace("'", '\'"\'"\'', $filename);
+        $sourceFile = $workload->source . '/' . $sanitized;
+        $command = "cd {$workload->homepath} && rsync -az --relative '{$sourceFile}' {$this->username}@{$this->akamai_host}::{$this->username}/{$this->directory} 2>&1 > /dev/null";
+
+        if (!file_exists($workload->homepath . $sourceFile)) {
+          $this->logger->addWarning('File that needs to be rsynced does not exist yet; waiting 5 seconds to retry', [
+            'file' => $sourceFile
+          ]);
+          sleep(5);
+        }
+
+        $run = exec($command, $output, $return);
+      } catch (\Throwable $e) {
+        $this->logger->addInfo('Failed running rsync command', [
+          'handle' => $handle,
+          'workload' => (array) $workload,
+          'command' => $command,
+          'output' => $output,
+          'return' => $return,
+          'exception' => [
+            'message' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'code' => $e->getCode()
+          ]
         ]);
-        sleep(5);
       }
-
-      $run = exec($command, $output, $return);
 
       if ($debug) {
         $this->logger->addInfo('UPLOAD STEP 5: AkamaiRsync::upload run command', [

@@ -47,7 +47,7 @@ class AkamaiRsync
     $debug = false;
     if (isset($workload->uri) && substr($workload->uri, -3, 3) === 'pdf') {
       $debug = true;
-      $this->logger->addInfo('UPLOAD STEP 4: AkamaiRsync::upload', [
+      $this->logger->info('UPLOAD STEP 4: AkamaiRsync::upload', [
         'workload' => (array) $workload,
         'tags' => [
           'gearman.handle' => $handle,
@@ -73,7 +73,7 @@ class AkamaiRsync
       $command = "cd {$workload->homepath} && rsync -az --relative '{$sourceFile}' {$this->username}@{$this->akamai_host}::{$this->username}/{$this->directory} 2>&1 > /dev/null";
 
       if (!file_exists($workload->homepath . $sourceFile)) {
-        $this->logger->addWarning('File that needs to be rsynced does not exist yet; waiting 5 seconds to retry', [
+        $this->logger->warning('File that needs to be rsynced does not exist yet; waiting 5 seconds to retry', [
           'context' => ['file' => $sourceFile],
           'tags' => [
             'gearman.handle' => $handle,
@@ -86,7 +86,7 @@ class AkamaiRsync
       $run = exec($command, $output, $return);
 
       if ($debug) {
-        $this->logger->addInfo('UPLOAD STEP 5: AkamaiRsync::upload run command', [
+        $this->logger->info('UPLOAD STEP 5: AkamaiRsync::upload run command', [
           'run_result' => $run,
           'command' => $command,
           'output' => $output,
@@ -103,7 +103,7 @@ class AkamaiRsync
         $success = false;
 
         // fail
-        $event = $this->logger->addWarning('Failed to rsync file to Akamai net storage.', [
+        $event = $this->logger->warning('Failed to rsync file to Akamai net storage.', [
           'context' => [
             'rsync_error' => $return,
             'handle' => $handle,
@@ -160,7 +160,7 @@ class AkamaiRsync
     $run = exec($command, $output, $return);
 
     if ($return) {
-      $this->logger->addWarning('Failed to delete file in Akamai net storage.', [
+      $this->logger->warning('Failed to delete file in Akamai net storage.', [
         'context' => [
           'rsync_error' => $return,
           'file' => "{$workload->source}/{$filename}",

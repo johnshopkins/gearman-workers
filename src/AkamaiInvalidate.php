@@ -62,7 +62,7 @@ class AkamaiInvalidate
       "objects" => $urls
     ), JSON_UNESCAPED_SLASHES);
     $client->headers["Content-Type"] = "application/json";
-    
+
     /*
     cURL automatically sends a Expect: 100-continue header, which
     periodically causes an error from Akamai purge cache plugin:
@@ -79,7 +79,7 @@ class AkamaiInvalidate
 
       // error
 
-      $this->logger->addWarning("Cache purge failure", [
+      $this->logger->warning("Cache purge failure", [
         'context' => [
           "urls" => $urls,
           "error" => $response["error"],
@@ -101,7 +101,7 @@ class AkamaiInvalidate
 
       if ($body->httpStatus !== 201) {
 
-        $this->logger->addWarning("Cache purge failure", [
+        $this->logger->warning("Cache purge failure", [
           'context' => [
             "urls" => $urls,
             "response" => $response,

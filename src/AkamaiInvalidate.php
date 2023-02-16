@@ -2,6 +2,8 @@
 
 namespace GearmanWorkers;
 
+use Akamai\Open\EdgeGrid\Authentication;
+
 class AkamaiInvalidate
 {
   public function __construct($settings = array())
@@ -14,6 +16,9 @@ class AkamaiInvalidate
 
     // gearman logger
     $this->logger = $settings["logger"];
+
+    // http client
+    $this->http = $settings["http"];
 
     // akamai api auth
     $this->api_auth = $settings["api_auth"];
@@ -51,39 +56,33 @@ class AkamaiInvalidate
 
   protected function sendInvalidateRequest($urls, $job)
   {
-    // setup edgegrid client
-    $verbose = false;
-    $client = new \Akamai\EdgeGrid($verbose, $this->api_auth);
+    $urls = array_map(fn ($url) => str_replace('local.', 'www.', $url), $urls);
 
-    // setup request
-    $client->path = "ccu/v3/invalidate/url/production";
-    $client->method = "POST";
-    $client->body = json_encode(array(
-      "objects" => $urls
-    ), JSON_UNESCAPED_SLASHES);
-    $client->headers["Content-Type"] = "application/json";
+    $path = '/ccu/v3/invalidate/url/production';
+    $body = json_encode(['objects' => $urls], JSON_UNESCAPED_SLASHES);
+    $headers = ['Content-Type' => 'application/json'];
 
-    /*
-    cURL automatically sends a Expect: 100-continue header, which
-    periodically causes an error from Akamai purge cache plugin:
-      "title": "Expectation Failed",
-      "status": 417,
-      "detail": "Expect 100-continue header is not supported"
-    Sending empty Expect header to "fix" this bug
-    */
-    $client->headers["Expect"] = "";
+    $auth = new Authentication();
+    $auth
+      ->setAuth($this->api_auth->client_token, $this->api_auth->client_secret, $this->api_auth->access_token)
+      ->setHttpMethod('POST')
+      ->setHost($this->api_auth->host)
+      ->setPath($path)
+      ->setBody($body);
 
-    $response = $client->request();
+    $headers['Authorization'] = $auth->createAuthHeader();
 
-    if ($response["error"]) {
+    $this->http->post('https://' . rtrim($this->api_auth->host, '/') . $path, [
+      'body' => $body,
+      'headers' => $headers
+    ]);
 
-      // error
-
-      $this->logger->warning("Cache purge failure", [
+    // look for thrown exceptions
+    if (!empty($this->http->log)) {
+      $this->logger->warning('Cache purge failure; exception thrown.', [
         'context' => [
-          "urls" => $urls,
-          "error" => $response["error"],
-          "response" => $response
+          'urls' => $urls,
+          'log' => $this->http->log
         ],
         'tags' => [
           'gearman.handle' => $job->handle(),
@@ -92,36 +91,25 @@ class AkamaiInvalidate
       ]);
 
       return false;
+    }
 
-    } else if ($response["body"]) {
+    $response = $this->http->getBody();
 
-      // no initial error, but it still could have failed, so check response code
+    if ($response->httpStatus !== 201) {
+      $this->logger->warning('Cache purge failure; exception thrown.', [
+        'context' => [
+          'urls' => $urls,
+          'response' => $response,
+        ],
+        'tags' => [
+          'gearman.handle' => $job->handle(),
+          'jhu.package' => 'gearman-workers'
+        ]
+      ]);
 
-      $body = json_decode($response["body"]);
-
-      if ($body->httpStatus !== 201) {
-
-        $this->logger->warning("Cache purge failure", [
-          'context' => [
-            "urls" => $urls,
-            "response" => $response,
-            "code" => $body->httpStatus
-          ],
-          'tags' => [
-            'gearman.handle' => $job->handle(),
-            'jhu.package' => 'gearman-workers'
-          ]
-        ]);
-
-        return false;
-
-      } else {
-
-        return true;
-
-      }
-    } else {
       return false;
     }
+
+    return true;
   }
 }

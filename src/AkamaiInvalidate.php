@@ -56,8 +56,6 @@ class AkamaiInvalidate
 
   protected function sendInvalidateRequest($urls, $job)
   {
-    $urls = array_map(fn ($url) => str_replace('local.', 'www.', $url), $urls);
-
     $path = '/ccu/v3/invalidate/url/production';
     $body = json_encode(['objects' => $urls], JSON_UNESCAPED_SLASHES);
     $headers = ['Content-Type' => 'application/json'];

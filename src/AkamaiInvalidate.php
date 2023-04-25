@@ -12,7 +12,7 @@ class AkamaiInvalidate
     $this->namespace = $settings["namespace"];
 
     // gearman worker
-    $this->worker = $settings["worker"];
+    $this->gearman_worker = $settings["gearman_worker"];
 
     // gearman logger
     $this->logger = $settings["logger"];
@@ -28,8 +28,8 @@ class AkamaiInvalidate
 
   protected function addFunctions()
   {
-    $this->worker->addFunction("{$this->namespace}_invalidate_urls", array($this, "invalidateUrls"));
-    $this->worker->addFunction("{$this->namespace}_invalidate_page", array($this, "invalidatePage"));
+    $this->gearman_worker->addFunction("{$this->namespace}_invalidate_urls", array($this, "invalidateUrls"));
+    $this->gearman_worker->addFunction("{$this->namespace}_invalidate_page", array($this, "invalidatePage"));
   }
 
   /**

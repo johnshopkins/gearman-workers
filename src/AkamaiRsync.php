@@ -10,7 +10,7 @@ class AkamaiRsync
     $this->namespace = $settings['namespace'];
 
     // gearman worker
-    $this->worker = $settings['worker'];
+    $this->gearman_worker = $settings['gearman_worker'];
 
     // gearman logger
     $this->logger = $settings['logger'];
@@ -35,8 +35,8 @@ class AkamaiRsync
 
   protected function addFunctions()
   {
-    $this->worker->addFunction("{$this->namespace}_upload", [$this, 'upload']);
-    $this->worker->addFunction("{$this->namespace}_delete", [$this, 'delete']);
+    $this->gearman_worker->addFunction("{$this->namespace}_upload", [$this, 'upload']);
+    $this->gearman_worker->addFunction("{$this->namespace}_delete", [$this, 'delete']);
   }
 
   public function upload(\GearmanJob $job)

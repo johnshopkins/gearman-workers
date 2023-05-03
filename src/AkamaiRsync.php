@@ -44,18 +44,6 @@ class AkamaiRsync
     $handle = $job->handle();
     $workload = json_decode($job->workload());
 
-    $debug = false;
-    if (isset($workload->uri) && substr($workload->uri, -3, 3) === 'pdf') {
-      $debug = true;
-      $this->logger->info('UPLOAD STEP 4: AkamaiRsync::upload', [
-        'workload' => (array) $workload,
-        'tags' => [
-          'gearman.handle' => $handle,
-          'jhu.package' => 'gearman-workers'
-        ]
-      ]);
-    }
-
     $this->hook('beforeUpload', $handle, $workload);
 
     // auth
@@ -84,19 +72,6 @@ class AkamaiRsync
       }
 
       $run = exec($command, $output, $return);
-
-      if ($debug) {
-        $this->logger->info('UPLOAD STEP 5: AkamaiRsync::upload run command', [
-          'run_result' => $run,
-          'command' => $command,
-          'output' => $output,
-          'return' => $return,
-          'tags' => [
-            'gearman.handle' => $handle,
-            'jhu.package' => 'gearman-workers'
-          ]
-        ]);
-      }
 
       if ($return) {
 

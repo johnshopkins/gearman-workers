@@ -6,13 +6,7 @@ class AkamaiRsync
 {
   public function __construct($settings = [])
   {
-    // namespace (ensures no duplicate worker functions)
     $this->namespace = $settings['namespace'];
-
-    // gearman worker
-    $this->gearman_worker = $settings['gearman_worker'];
-
-    // gearman logger
     $this->logger = $settings['logger'];
 
     // the directory where things will get rsynced to
@@ -25,21 +19,44 @@ class AkamaiRsync
     // akamai host (i.e. jhuwww.upload.akamai.com)
     $this->akamai_host = $settings['akamai_host'];
 
-    // akamai api auth
-    $this->api_auth = $settings['api_auth'];
-
     $this->callback = $settings["callback"] ?? null;
+
+    $this->gearman_worker = $settings['gearman_worker'];
+    $this->redis_worker = $settings['redis_worker'];
 
     $this->addFunctions();
   }
 
   protected function addFunctions()
   {
-    $this->gearman_worker->addFunction("{$this->namespace}_upload", [$this, 'upload']);
-    $this->gearman_worker->addFunction("{$this->namespace}_delete", [$this, 'delete']);
+    $this->gearman_worker->addFunction("{$this->namespace}_upload", [$this, 'upload_gearmand']);
+    $this->gearman_worker->addFunction("{$this->namespace}_delete", [$this, 'delete_gearman']);
+
+    $this->redis_worker->addFunction("{$this->namespace}_upload", [$this, 'upload_redis']);
+    $this->redis_worker->addFunction("{$this->namespace}_delete", [$this, 'delete_redis']);
   }
 
-  public function upload(\GearmanJob $job)
+  public function upload_gearmand(\GearmanJob $job)
+  {
+    return $this->upload($job);
+  }
+
+  public function delete_gearman(\GearmanJob $job)
+  {
+    return $this->upload($job);
+  }
+
+  public function upload_redis()
+  {
+
+  }
+
+  public function delete_redis()
+  {
+
+  }
+
+  protected function upload(\GearmanJob $job)
   {
     $handle = $job->handle();
     $workload = json_decode($job->workload());
@@ -141,7 +158,7 @@ class AkamaiRsync
     return $success;
   }
 
-  public function delete(\GearmanJob $job)
+  protected function delete(\GearmanJob $job)
   {
     $workload = json_decode($job->workload());
     $handle = $job->handle();

@@ -6,30 +6,27 @@ use Akamai\Open\EdgeGrid\Authentication;
 
 class AkamaiInvalidate
 {
-  public function __construct($settings = array())
+  public function __construct($settings = [])
   {
-    // namespace (ensures no duplicate worker functions)
-    $this->namespace = $settings["namespace"];
+    $this->namespace = $settings['namespace'];
+    $this->http = $settings['http'];
+    $this->logger = $settings['logger'];
 
-    // gearman worker
-    $this->gearman_worker = $settings["gearman_worker"];
+    $this->api_auth = $settings['api_auth'];
 
-    // gearman logger
-    $this->logger = $settings["logger"];
-
-    // http client
-    $this->http = $settings["http"];
-
-    // akamai api auth
-    $this->api_auth = $settings["api_auth"];
+    $this->gearman_worker = $settings['gearman_worker'];
+    $this->redis_worker = $settings['redis_worker'];
 
     $this->addFunctions();
   }
 
   protected function addFunctions()
   {
-    $this->gearman_worker->addFunction("{$this->namespace}_invalidate_urls", array($this, "invalidateUrls"));
-    $this->gearman_worker->addFunction("{$this->namespace}_invalidate_page", array($this, "invalidatePage"));
+    $this->gearman_worker->addFunction("{$this->namespace}_invalidate_urls", array($this, "invalidateUrls_gearman"));
+    $this->gearman_worker->addFunction("{$this->namespace}_invalidate_page", array($this, "invalidatePage_gearman"));
+
+    $this->redis_worker->addCallback("{$this->namespace}_invalidate_urls", [$this, 'invalidateUrls_redis']);
+    $this->redis_worker->addCallback("{$this->namespace}_invalidate_page", [$this, 'invalidatePage_redis']);
   }
 
   /**
@@ -38,13 +35,13 @@ class AkamaiInvalidate
    * @param  GearmanJob $job object
    * @return null
    */
-  public function invalidateUrls(\GearmanJob $job)
+  public function invalidateUrls_gearman(\GearmanJob $job)
   {
     $workload = json_decode($job->workload());
     return $this->sendInvalidateRequest($workload->urls, $job);
   }
 
-  public function invalidatePage(\GearmanJob $job)
+  public function invalidatePage_gearman(\GearmanJob $job)
   {
     $workload = json_decode($job->workload());
 
@@ -52,6 +49,16 @@ class AkamaiInvalidate
     sleep(5);
 
     return $this->sendInvalidateRequest($workload->urls, $job);
+  }
+
+  public function invalidateUrls_redis($data)
+  {
+
+  }
+
+  public function invalidatePage_redis($data)
+  {
+
   }
 
   protected function sendInvalidateRequest($urls, $job)

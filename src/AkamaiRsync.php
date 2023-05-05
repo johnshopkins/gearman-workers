@@ -21,19 +21,23 @@ class AkamaiRsync
 
     $this->callback = $settings["callback"] ?? null;
 
-    $this->gearman_worker = $settings['gearman_worker'];
-    $this->redis_worker = $settings['redis_worker'];
+    $this->gearman_worker = $settings['gearman_worker'] ?? null;
+    $this->redis_worker = $settings['redis_worker'] ?? null;
 
     $this->addFunctions();
   }
 
   protected function addFunctions()
   {
-    $this->gearman_worker->addFunction("{$this->namespace}_upload", [$this, 'upload_gearmand']);
-    $this->gearman_worker->addFunction("{$this->namespace}_delete", [$this, 'delete_gearman']);
+    if ($this->gearman_worker) {
+      $this->gearman_worker->addFunction("{$this->namespace}_upload", [$this, 'upload_gearmand']);
+      $this->gearman_worker->addFunction("{$this->namespace}_delete", [$this, 'delete_gearman']);
+    }
 
-    $this->redis_worker->addFunction("{$this->namespace}_upload", [$this, 'upload_redis']);
-    $this->redis_worker->addFunction("{$this->namespace}_delete", [$this, 'delete_redis']);
+    if ($this->redis_worker) {
+      $this->redis_worker->addCallback("{$this->namespace}_upload", [$this, 'upload_redis']);
+      $this->redis_worker->addCallback("{$this->namespace}_delete", [$this, 'delete_redis']);
+    }
   }
 
   public function upload_gearmand(\GearmanJob $job)

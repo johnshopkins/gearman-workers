@@ -14,19 +14,23 @@ class AkamaiInvalidate
 
     $this->api_auth = $settings['api_auth'];
 
-    $this->gearman_worker = $settings['gearman_worker'];
-    $this->redis_worker = $settings['redis_worker'];
+    $this->gearman_worker = $settings['gearman_worker'] ?? null;
+    $this->redis_worker = $settings['redis_worker'] ?? null;
 
     $this->addFunctions();
   }
 
   protected function addFunctions()
   {
-    $this->gearman_worker->addFunction("{$this->namespace}_invalidate_urls", array($this, "invalidateUrls_gearman"));
-    $this->gearman_worker->addFunction("{$this->namespace}_invalidate_page", array($this, "invalidatePage_gearman"));
+    if ($this->gearman_worker) {
+      $this->gearman_worker->addFunction("{$this->namespace}_invalidate_urls", array($this, "invalidateUrls_gearman"));
+      $this->gearman_worker->addFunction("{$this->namespace}_invalidate_page", array($this, "invalidatePage_gearman"));
+    }
 
-    $this->redis_worker->addCallback("{$this->namespace}_invalidate_urls", [$this, 'invalidateUrls_redis']);
-    $this->redis_worker->addCallback("{$this->namespace}_invalidate_page", [$this, 'invalidatePage_redis']);
+    if ($this->redis_worker) {
+      $this->redis_worker->addCallback("{$this->namespace}_invalidate_urls", [$this, 'invalidateUrls_redis']);
+      $this->redis_worker->addCallback("{$this->namespace}_invalidate_page", [$this, 'invalidatePage_redis']);
+    }
   }
 
   /**
